@@ -12,12 +12,12 @@
 
 <p><strong>MyApp.pm</strong></p>
 
-<p>```perl
+<code>
 package MyApp;
 use KelpX::Sweet;</p>
 
 <p>maps ['Main'];
-```</p>
+</code>
 
 <p>Yep, that's the complete code for your base. You pass <code>maps</code> an array reference of the routes you want to include. 
 It will look for them in <code>MyApp::Route::</code>. So the above example will load <code>MyApp::Route::Main</code>.
@@ -25,14 +25,14 @@ Next, let's create that file</p>
 
 <p><strong>MyApp/Route/Main.pm</strong></p>
 
-<p>```perl
+<code>
 package MyApp::Route::Main;</p>
 
 <p>use KelpX::Sweet::Route;</p>
 
 <p>get '/' => 'Controller::Root::hello';
 get '/nocontroller' => sub { 'Hello, world from no controller!' };
-```</p>
+</code>
 
 <p>Simply use <code>KelpX::Sweet::Route</code>, then create your route definitions here. You're welcome to put your logic inside code refs, 
 but that makes the whole idea of this module pointless ;) 
