@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title></title>
+
+    <!-- Le styles -->
+    <link href="bootstrap/css/bootstrap.css" rel="stylesheet">
+    <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="bootstrap/css/docs.css" rel="stylesheet">
+    <link href="bootstrap/js/google-code-prettify/prettify.css" rel="stylesheet">
+
+  </head>
+
+  <body data-spy="scroll" data-target=".bs-docs-sidebar">
+
+  
+
+  <div class="container">
+
+  <div class="row">
+
+<div class="span3 bs-docs-sidebar"><ul class="nav nav-list bs-docs-sidenav" data-spy="affix"><li><a href="#1">1. NAME</a></li><li><a href="#2">2. DESCRIPTION</a></li><li><a href="#3">3. SIMPLE TUTORIAL</a></li><li><a href="#4">4. SUGARY SYNTAX</a></li><li><a href="#5">4.1. get</a></li><li><a href="#6">4.2. post</a></li><li><a href="#7">4.3. any</a></li><li><a href="#8">4.4. bridge</a></li><li><a href="#9">4.5. has</a></li><li><a href="#10">4.6. around</a></li><li><a href="#11">5. MODELS</a></li><li><a href="#12">6. config.pl</a></li><li><a href="#13">6.1. Models and DBIx::Class</a></li><li><a href="#14">7. VIEWS</a></li><li><a href="#15">7.1. detach</a></li><li><a href="#16">7.2. Hello, [% name %]</a></li><li><a href="#17">8. REALLY COOL THINGS TO NOTE</a></li><li><a href="#18">8.1. Default imports</a></li><li><a href="#19">8.2. KelpX::Sweet starter</a></li><li><a href="#20">9. AUTHOR</a></li><li><a href="#21">10. LICENSE</a></li></ul></div><div class="span9"><h1 id="1">1. NAME</h1>
+
+<p>KelpX::Sweet - Kelp with extra sweeteners</p>
+
+<h1 id="2">2. DESCRIPTION</h1>
+
+<p>Kelp is good. Kelp is great. But what if you could give it more syntactic sugar and separate your routes from the logic in a cleaner way? KelpX::Sweet attempts to do just that.</p>
+
+<h1 id="3">3. SIMPLE TUTORIAL</h1>
+
+<p>For the most part, your original <code>app.psgi</code> will remain the same as Kelps.</p>
+
+<p><strong>MyApp.pm</strong></p>
+
+<p>```perl
+package MyApp;
+use KelpX::Sweet;</p>
+
+<p>maps ['Main'];
+```</p>
+
+<p>Yep, that's the complete code for your base. You pass <code>maps</code> an array reference of the routes you want to include. 
+It will look for them in <code>MyApp::Route::</code>. So the above example will load <code>MyApp::Route::Main</code>.
+Next, let's create that file</p>
+
+<p><strong>MyApp/Route/Main.pm</strong></p>
+
+<p>```perl
+package MyApp::Route::Main;</p>
+
+<p>use KelpX::Sweet::Route;</p>
+
+<p>get '/' => 'Controller::Root::hello';
+get '/nocontroller' => sub { 'Hello, world from no controller!' };
+```</p>
+
+<p>Simply use <code>KelpX::Sweet::Route</code>, then create your route definitions here. You're welcome to put your logic inside code refs, 
+but that makes the whole idea of this module pointless ;) 
+It will load <code>MyApp::</code> then whatever you pass to it. So the '/' above will call <code>MyApp::Controller::Root::hello</code>. Don't worry, 
+any of your arguments will also be sent the method inside that controller, so you don't need to do anything else!</p>
+
+<p>Finally, we can create the controller</p>
+
+<p><strong>MyApp/Controller/Root.pm</strong></p>
+
+<p>```perl
+package MyApp::Controller::Root;</p>
+
+<p>use KelpX::Sweet::Controller;</p>
+
+<p>sub hello {
+    my ($self) = @_;
+    return "Hello, world!";
+}
+```</p>
+
+<p>You now have a fully functional Kelp app! Remember, because this module is just a wrapper, you can do pretty much anything <a href="https://metacpan.org/pod/Kelp">Kelp</a> 
+can, like <code>$self-</code>>param> for example.</p>
+
+<h1 id="4">4. SUGARY SYNTAX</h1>
+
+<p>By sugar, we mean human readable and easy to use. You no longer need a build method, then to call ->add on an object for your 
+routes. It uses a similar syntax to <a href="https://metacpan.org/pod/Kelp%3a%3aLess">Kelp::Less</a>. You'll also find one called <code>bridge</code>.</p>
+
+<h2 id="5">4.1. get</h2>
+
+<p>This will trigger a standard GET request.</p>
+
+<p><code>perl
+get '/mypage' =&gt; sub { 'It works' };
+</code></p>
+
+<h2 id="6">4.2. post</h2>
+
+<p>Will trigger on POST requests only</p>
+
+<p><code>perl
+post '/someform' =&gt; sub { 'Posted like a boss' };
+</code></p>
+
+<h2 id="7">4.3. any</h2>
+
+<p>Will trigger on POST <strong>or</strong> GET requests</p>
+
+<p><code>perl
+any '/omni' =&gt; sub { 'Hit me up on any request' };
+</code></p>
+
+<h2 id="8">4.4. bridge</h2>
+
+<p>Bridges are cool, so please check out the Kelp documentation for more information on what they do and how they work.</p>
+
+<p>```perl
+bridge '/users/:id' => sub {
+    unless ($self->user->logged_in) {
+        return;
+    }</p>
+
+<pre class="prettyprint"><code>return 1;
+</code></pre>
+
+<p>};</p>
+
+<p>get '/users/:id/view' => 'Controller::Users::view';
+```</p>
+
+<h2 id="9">4.5. has</h2>
+
+<p>If you only want basic accessors and KelpX::Sweet detects you don't have any OOP frameworks activated with <code>has</code>, then it will import its 
+own little method which works similar to <a href="https://metacpan.org/pod/Moo">Moo</a>'s. Currently, it only supports <code>is</code>, <code>required</code> and <code>default</code>.</p>
+
+<p>```perl
+package MyApp;</p>
+
+<p>use KelpX::Sweet;
+has 'x' => ( is => 'rw', default => sub { "Hello, world" } );</p>
+
+<p>package MyApp::Controller::Main;</p>
+
+<p>use KelpX::Sweet::Controller;</p>
+
+<p>sub hello { shift->x; } # Hello, world
+```</p>
+
+<h2 id="10">4.6. around</h2>
+
+<p>Need more power? Want to modify the default <code>build</code> method? No problem. Similar to <code>has</code>, if KelpX::Sweet detects you have no <code>around</code> method, it will import one. 
+This allows you to tap into build if you really want to for some reason.</p>
+
+<p>```perl
+package MyApp;</p>
+
+<p>use KelpX::Sweet;</p>
+
+<p>around 'build' => sub {
+    my $method = shift;
+    my $self   = shift;
+    my $routes = $self->routes;
+    $routes->add('/manual' => sub { "Manually added" });</p>
+
+<pre class="prettyprint"><code>$self-&gt;$method(@_);
+</code></pre>
+
+<p>};
+```</p>
+
+<h1 id="11">5. MODELS</h1>
+
+<p>You can always use an attribute to create a database connection, or separate them using models in a slightly cleaner way.
+In your config you supply a hash reference with the models alias (what you will reference it as in code), the full path, and finally any 
+arguments it might have (like the dbi line, username and password).</p>
+
+<p>```perl</p>
+
+<h1 id="12">6. config.pl</h1>
+
+<p>models => {
+    'LittleDB' => {
+        'model' => 'TestApp::Model::LittleDB',
+        'args'  => ['dbi:SQLite:testapp.db'],
+    },
+},
+```</p>
+
+<p>Then, you create <code>TestApp::Model::LittleDB</code></p>
+
+<p>```perl
+package TestApp::Model::LittleDB;</p>
+
+<p>use KelpX::Sweet::Model;
+use DBIx::Lite;</p>
+
+<p>sub build {
+    my ($self, @args) = @_;
+    return DBIx::Lite->connect(@args);
+}
+```</p>
+
+<p>As you can see, the <code>build</code> function returns the DB object you want. You can obviously use DBIx::Class or whatever you want here.</p>
+
+<p>That's all you need. Now you can pull that model instance out at any time in your controllers with <code>model</code>.</p>
+
+<p>```perl
+package TestApp::Controller::User;</p>
+
+<p>use KelpX::Sweet::Controller;</p>
+
+<p>sub users {
+    my ($self) = @<em>;
+    my @users  = $self->model('LittleDB')->table('users')->all;
+    return join ', ', map { $</em>->name } @users;
+}
+```</p>
+
+<h2 id="13">6.1. Models and DBIx::Class</h2>
+
+<p>If you enjoy the way Catalyst handles DBIx::Class models, you're going to love this (I hope so, at least). KelpX::Sweet will automagically 
+create models based on the sources of your schema if it detects it's a DBIx::Class::Schema.
+Nothing really has to change, KelpX::Sweet will figure it out on its own.</p>
+
+<p>```perl
+package TestApp::Model::LittleDB;</p>
+
+<p>use KelpX::Sweet::Model;
+use LittleDB::Schema;</p>
+
+<p>sub build {
+    my ($self, @args) = @_;
+    return LittleDB::Schema->connect(@args);
+}
+```</p>
+
+<p>Then just use it as you normally would in Catalyst (except we store it in <code>$self</code>, not <code>$c</code>).</p>
+
+<p>```perl
+package TestApp::Controller::User;</p>
+
+<p>use KelpX::Sweet::Controller;</p>
+
+<p>sub users {
+    my ($self) = @<em>;
+    my @users = $self->model('LittleDB::User')->all;
+    return join ', ', map { $</em>->name } @users;
+}
+```</p>
+
+<p>KelpX::Sweet will loop through all your schemas sources and create models based on your alias, and the sources name. So, <code>Alias::SourceName</code>.</p>
+
+<p>When we start our app, even though we've only added LittleDB, you'll see we have the new ones based on our Schema. Neat!</p>
+
+<p><code>
+.----------------------------------------------------------.
+| Model                                | Alias             |
++--------------------------------------+-------------------+
+| TestApp::Model::LittleDB             | LittleDB          |
+| LittleDB::Schema::ResultSet::User    | LittleDB::User    |
+| LittleDB::Schema::ResultSet::Product | LittleDB::Product |
+'--------------------------------------+-------------------'
+</code></p>
+
+<h1 id="14">7. VIEWS</h1>
+
+<p>OK, so to try and not separate too much, I've chosen not to include views. Just use the standard Kelp modules 
+(ie: <a href="https://metacpan.org/pod/Kelp%3a%3aModule%3a%3aTemplate%3a%3aToolkit">Kelp::Module::Template::Toolkit</a>). However, there is a convenience method mentioned below.</p>
+
+<h2 id="15">7.1. detach</h2>
+
+<p>This method will call <code>template</code> for you with the added benefit of automatically filling out the filename and including whatever 
+is in the stash for you.</p>
+
+<p>```perl
+ package MyApp::Controller::Awesome;</p>
+
+<p>use KelpX::Sweet::Controller;</p>
+
+<p>sub hello {
+     my ($self) = @_;
+     $self->stash->{name} = 'World';
+     $self->detach;
+ }
+```</p>
+
+<p>Then, you just create <code>hello.tt</code>.</p>
+
+<p>```</p>
+
+<h2 id="16">7.2. Hello, [% name %]</h2>
+
+<p>```</p>
+
+<p>While not really required, it does save a bit of typing and can come in quite useful.</p>
+
+<h1 id="17">8. REALLY COOL THINGS TO NOTE</h1>
+
+<h2 id="18">8.1. Default imports</h2>
+
+<p>You should be aware that KelpX::Sweet will import warnings, strict and true for you. Because of this, there is no requirement to 
+add a true value to the end of your file. I chose this because it just makes things look a little cleaner.</p>
+
+<h2 id="19">8.2. KelpX::Sweet starter</h2>
+
+<p>On installation of KelpX::Sweet, you'll receive a file called <code>kelpx-sweet</code>. Simply run this, passing it the name of your module 
+and it will create a working test app with minimal boilerplate so you can get started straight away. Just run it as:</p>
+
+<p><code>
+$ kelpx-sweet MyApp
+$ kelpx-sweet Something::With::A::Larger::Namespace
+</code></p>
+
+<h1 id="20">9. AUTHOR</h1>
+
+<p>Brad Haywood <brad@perlpowered.com></p>
+
+<h1 id="21">10. LICENSE</h1>
+
+<p>You may distribute this code under the same terms as Perl itself.</p>
+      </div>
+    </div>
+
+  </div>
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="bootstrap/js/jquery.js"></script>
+    <script src="bootstrap/js/google-code-prettify/prettify.js"></script>
+    <script src="bootstrap/js/bootstrap.js"></script>
+    <script type="text/javascript">prettyPrint();</script>
+
+  </body>
+</html>
